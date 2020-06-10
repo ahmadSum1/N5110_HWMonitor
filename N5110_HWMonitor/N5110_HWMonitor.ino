@@ -96,7 +96,7 @@ int readSerial()
         inp = 2;
 
       }
-      else if (inputString.startsWith("CPU")) {
+      else if (   inputString.startsWith("CPU") || inputString.startsWith("GCC") || inputString.startsWith("GMC") || inputString.startsWith("GSC")  ) {
         //Do nothing
         //        Serial.println("lalalalalalal");
       }
@@ -110,7 +110,7 @@ int readSerial()
         */
 
         if (inputString.startsWith("C")) {
-          cpuTempString = inputString.substring(inputString.indexOf('C') + 1, inputString.indexOf('c'));
+          cpuTempString = inputString.substring( 1, inputString.indexOf('c'));
           Serial.print("\t                                          " + cpuTempString);
           cpuLoadString = inputString.substring(inputString.indexOf('c') + 1, inputString.indexOf('%'));
           Serial.print("\t" + cpuLoadString);

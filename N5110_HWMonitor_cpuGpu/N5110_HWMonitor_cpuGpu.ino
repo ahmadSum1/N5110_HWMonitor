@@ -18,8 +18,9 @@
   https://cdn.hackaday.io/files/19018813666112/HardwareSerialMonitor_v1.1.zip
 */
 
-// comment out for load graph
-#define CLOCK_GRAPH
+// comment out for load/gpuload graph
+//#define CLOCK_GRAPH
+//#define GPULOAD_GRAPH
 
 #include "N5110_SPI.h"
 // define USESPI in above header for HW SPI version
@@ -42,6 +43,10 @@ String cpuClockString;
 String ramString;
 int cpuLoad = 0;
 int cpuClock = 0;
+String gpuLoadString;
+String gpuTempString;
+int gpuLoad = 0;
+int gpuClock = 0;
 int inp = 0;
 
 void setup()
@@ -64,7 +69,10 @@ int readSerial()
       inputString += ch;
     }
     else { // full info chunk received
+
+      inputString.trim();
       Serial.println(inputString);    //debugg
+
 
       //Sample frame from  my(ahmadSum1) PC
       //CPU:AMD Ryzen 5 2600XGPU:NVIDIA GeForce GTX 760|GCC135|GMC324|GSC270|CHC4025|C49c 1%|G47c 1%|RG|
@@ -86,9 +94,10 @@ int readSerial()
         cpuClock = cpuClockString.toInt();
         inp = 3;
       }
+
+      // used RAM: "R6.9" (Mine Shows: "RG")
       else if (inputString.startsWith("R")) {
 
-        // used RAM: "R6.9" (Mine Shows: "RG")
         //        en = inputString.indexOf("|", st);
         ramString = inputString.substring(1 , inputString.length() - 1);
         int st = ramString.indexOf(",");
@@ -96,29 +105,30 @@ int readSerial()
         inp = 2;
 
       }
-      else if (inputString.startsWith("CPU")) {
+      //CPU GPU Model
+      else if ( inputString.startsWith("CPU") || inputString.startsWith("GCC") || inputString.startsWith("GMC") || inputString.startsWith("GSC") ) {
         //Do nothing
         //        Serial.println("lalalalalalal");
       }
-      else {
-        inputString.trim();
-        /*
-           So Now
-           C59c 2% --> C59c2%
-           G46c 1% --> G46c1%
-
-        */
-
-        if (inputString.startsWith("C")) {
-          cpuTempString = inputString.substring(inputString.indexOf('C') + 1, inputString.indexOf('c'));
-          Serial.print("\t                                          " + cpuTempString);
-          cpuLoadString = inputString.substring(inputString.indexOf('c') + 1, inputString.indexOf('%'));
-          Serial.print("\t" + cpuLoadString);
-          cpuLoad = cpuLoadString.toInt();
-          Serial.println("\t" + cpuLoad);
-          inp = 1;
-        }
+      else if (inputString.startsWith("C")) {
+        cpuTempString = inputString.substring(inputString.indexOf('C') + 1, inputString.indexOf('c'));
+        Serial.print("\t************ C" + cpuTempString);
+        cpuLoadString = inputString.substring(inputString.indexOf('c') + 1, inputString.indexOf('%'));
+        Serial.print("," + cpuLoadString);
+        cpuLoad = cpuLoadString.toInt();
+        Serial.println("," + cpuLoad);
+        inp = 1;
       }
+      else if (inputString.startsWith("G")) {
+        gpuTempString = inputString.substring(inputString.indexOf('G') + 1, inputString.indexOf('c'));
+        Serial.print("\t########## G" + gpuTempString);
+        gpuLoadString = inputString.substring(inputString.indexOf('c') + 1, inputString.indexOf('%'));
+        Serial.print("," + gpuLoadString);
+        gpuLoad = gpuLoadString.toInt();
+        Serial.println("," + gpuLoad);
+        //        inp = 4;
+      }
+
       inputString = "";
       return 1;
 
@@ -142,6 +152,8 @@ void addVal()
   if (cpuClock < 400) cpuClock = 400;
   if (cpuClock > 2900) cpuClock = 2900;
   valTab[NUM_VAL - 1] = (long)(cpuClock - MIN_CLOCK) * ght / (MAX_CLOCK - MIN_CLOCK);
+#elif GPULOAD_GRAPH
+  valTab[NUM_VAL - 1] = gpuLoad * ght / 100;
 #else
   valTab[NUM_VAL - 1] = cpuLoad * ght / 100;
 #endif
@@ -210,20 +222,21 @@ void loop()
   {
     int xs = 38;
     lcd.setFont(c64enh);
-    lcd.printStr(0, 0, "Temp: ");
+    lcd.printStr(0, 0, "CTemp: ");
     x = lcd.printStr(xs, 0, (char*)cpuTempString.c_str());
     lcd.printStr(x, 0, "'C  ");
-    lcd.printStr(0, 1, "Load: ");
+    lcd.printStr(0, 1, "CLoad: ");
     snprintf(buf, 20, "%d %", cpuLoad);
     x = lcd.printStr(xs, 1, buf);
     lcd.printStr(x, 1, "%  ");
-    lcd.printStr(0, 3, "RAM: ");
-    x = lcd.printStr(xs, 3, (char*)ramString.c_str());
-    lcd.printStr(x, 3, " GB  ");
-    lcd.printStr(0, 2, "Clock: ");
-    x = lcd.printStr(xs, 2, (char*)cpuClockString.c_str());
+    lcd.printStr(0, 3, "GLoad: ");
+    snprintf(buf, 20, "%d %", gpuLoad);
+    x = lcd.printStr(xs, 3, buf);
+    lcd.printStr(x, 3, "%  ");
+    lcd.printStr(0, 2, "GTemp: ");
+    x = lcd.printStr(xs, 2, (char*)gpuTempString.c_str());
     lcd.setFont(Small5x7PLBold);
-    lcd.printStr(x, 2, " MHz    ");
+    lcd.printStr(x, 2, "'C  ");
 #ifdef CLOCK_GRAPH
     i = 2;
 #else
