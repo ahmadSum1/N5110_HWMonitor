@@ -111,7 +111,7 @@ int readSerial()
         //        Serial.println("lalalalalalal");
       }
       else if (inputString.startsWith("C")) {
-        cpuTempString = inputString.substring(inputString.indexOf('C') + 1, inputString.indexOf('c'));
+        cpuTempString = inputString.substring(1, inputString.indexOf('c'));
         Serial.print("\t************ C" + cpuTempString);
         cpuLoadString = inputString.substring(inputString.indexOf('c') + 1, inputString.indexOf('%'));
         Serial.print("," + cpuLoadString);
@@ -120,7 +120,7 @@ int readSerial()
         inp = 1;
       }
       else if (inputString.startsWith("G")) {
-        gpuTempString = inputString.substring(inputString.indexOf('G') + 1, inputString.indexOf('c'));
+        gpuTempString = inputString.substring( 1, inputString.indexOf('c'));
         Serial.print("\t########## G" + gpuTempString);
         gpuLoadString = inputString.substring(inputString.indexOf('c') + 1, inputString.indexOf('%'));
         Serial.print("," + gpuLoadString);
@@ -226,12 +226,10 @@ void loop()
     x = lcd.printStr(xs, 0, (char*)cpuTempString.c_str());
     lcd.printStr(x, 0, "'C  ");
     lcd.printStr(0, 1, "CLoad: ");
-    snprintf(buf, 20, "%d %", cpuLoad);
-    x = lcd.printStr(xs, 1, buf);
+    x = lcd.printStr(xs, 1, (char*)cpuLoadString.c_str());
     lcd.printStr(x, 1, "%  ");
     lcd.printStr(0, 3, "GLoad: ");
-    snprintf(buf, 20, "%d %", gpuLoad);
-    x = lcd.printStr(xs, 3, buf);
+    x = lcd.printStr(xs, 3, (char*)gpuLoadString.c_str());
     lcd.printStr(x, 3, "%  ");
     lcd.printStr(0, 2, "GTemp: ");
     x = lcd.printStr(xs, 2, (char*)gpuTempString.c_str());
@@ -252,7 +250,7 @@ void loop()
     lcd.drawBuf(scr, 0, 4, scrWd, scrHt);
   }
   if (inp >= 3) {
-    delay(1000);
+    delay(500);
     inp = 0;
   }
 }
